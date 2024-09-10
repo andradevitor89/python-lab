@@ -28,7 +28,7 @@ if __name__ == "__main__":
             time_end = time.time()
             print(f"Time taken: {time_end - time_start}")
     except exceptiongroup.ExceptionGroup as e:
-        print(f"Exception caught: {e}.")
+        print(f"Exception caught: {e}. {e.message}", e.exceptions)
         sys.exit(1)    
     except Exception as e:
         print(f"Exception caught: {e}.")
