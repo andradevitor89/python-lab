@@ -1,9 +1,15 @@
 import sys
 import time
 import asyncio
-import exceptiongroup
-import trio
-from start import start_many_async, start_many_sync, start_many_async_trio
+from start import start_many_fetch_async, start_many_fetch_sync
+import threading
+
+
+async def _another_async_task(count: int):
+    for i in range(count):
+        print(f"Running another async task {i +1}")
+        await asyncio.sleep(0.3)
+
 
 if __name__ == "__main__":
     args = sys.argv[1:]
@@ -11,25 +17,42 @@ if __name__ == "__main__":
     count = int(args[1])
     try:
         if mode == "sync":
-            time_start = time.time()
-            start_many_sync(count=count)
-            time_end = time.time()
-            print(f"Time taken: {time_end - time_start}")   
-            
-        elif mode == "async":
-            time_start = time.time()
-            asyncio.run(start_many_async(count=count))
-            time_end = time.time()
-            print(f"Time taken: {time_end - time_start}")   
+            start_many_fetch_sync(count=count)
 
-        elif mode == "trio":
-            time_start = time.time()
-            trio.run(start_many_async_trio, count)
-            time_end = time.time()
-            print(f"Time taken: {time_end - time_start}")
-    except exceptiongroup.ExceptionGroup as e:
-        print(f"Exception caught: {e}. {e.message}", e.exceptions)
-        sys.exit(1)    
+        elif mode == "async":
+            asyncio.run(start_many_fetch_async(count=count))
+
+        elif mode == "async-multi-loops":
+            def _run_start_many_async_event_loop():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(start_many_fetch_async(count=count))
+                loop.close()
+
+            def _run_start_many_async_event_loop():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(start_many_fetch_async(count=count))
+                loop.close()
+
+            def _run_another_async_task_event_loop():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(_another_async_task(count=count))
+                loop.close()
+
+            thread_1 = threading.Thread(
+                target=_run_start_many_async_event_loop, name="Thread-1")
+            thread_2 = threading.Thread(
+                target=_run_another_async_task_event_loop, name="Thread-2")
+
+            thread_1.start()
+            thread_2.start()
+
+            thread_1.join()
+            thread_2.join()
+
+
     except Exception as e:
         print(f"Exception caught: {e}.")
         sys.exit(1)
