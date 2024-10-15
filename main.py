@@ -9,6 +9,7 @@ async def _another_async_task(count: int):
     for i in range(count):
         print(f"Running another async task {i +1}")
         await asyncio.sleep(0.3)
+        print(f"Another async task {i + 1} completed.")
 
 
 if __name__ == "__main__":
@@ -23,12 +24,6 @@ if __name__ == "__main__":
             asyncio.run(start_many_fetch_async(count=count))
 
         elif mode == "async-multi-loops":
-            def _run_start_many_async_event_loop():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(start_many_fetch_async(count=count))
-                loop.close()
-
             def _run_start_many_async_event_loop():
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
