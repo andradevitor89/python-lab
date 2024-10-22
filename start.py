@@ -34,6 +34,11 @@ def start_many_fetch_sync(count: int):
 
 @timeit
 async def start_many_fetch_async(count: int):
-    tasks = [fetch_async(i+1) for i in range(count)]
-    results = await asyncio.gather(*tasks)
+    tasks = []
+    # Error Handling: TaskGroup automatically cancels all tasks if one fails.
+    # Task Management: TaskGroup ensures all tasks are managed together.
+    # Readability: TaskGroup provides a cleaner and more maintainable approach.
+    async with asyncio.TaskGroup() as g:
+        tasks = [g.create_task(fetch_async(i + 1)) for i in range(count)]
+    results = [task.result() for task in tasks]
     print("length of results", len(results))
